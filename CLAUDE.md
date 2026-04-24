@@ -1,0 +1,47 @@
+# TIVA/ — Binding rules for Claude
+
+This folder is the TIVA board project (TI TM4C, PlatformIO, `Makefile`).
+Authoritative project-wide rules live at the top-level `CLAUDE.md` and at
+`Robot/CLAUDE.md`. Read those first; the rules below are the TIVA-specific
+reinforcements.
+
+## Sibling-ignorance
+
+TIVA must not reach into any other board folder. Do not include from,
+reference paths inside, or copy-paste out of `Nano/`, `Discovery/`,
+`Nucleo411/`, `Nucleo446/`, or `PNucleo/`. If another board has a feature
+TIVA also wants, factor it into `Robot/` and compose it here — never
+cross-link.
+
+## Compose from Robot, don't duplicate it
+
+Shared features live in `Robot/`. TIVA adopts them by:
+
+1. Adding the relevant `Robot/<area>/<feature>/` sources and include paths
+   to TIVA's build (`Makefile` / `platformio.ini` / `extra_script.py`).
+2. Calling `feature_init()` (and any hook registrations) from TIVA's
+   startup path.
+3. Supplying hardware shims the feature requests via its `feature_bind_hw()`
+   API — shims live **here**, in TIVA.
+
+## What belongs in TIVA/
+
+- `src/`, `include/`, `lib/`, `linker.ld`, `startup_tm4c.s`,
+  `system_tm4c.c`, `platformio.ini`, `Makefile`, `extra_script.py`.
+- TivaWare / TM4C peripheral code (anything that includes `driverlib/`
+  or `inc/hw_*.h`).
+- Board-specific CLI words (anything that reads TM4C registers or uses
+  TivaWare directly). Register with `cli_register(...)` from a TIVA init
+  function.
+- The TIVA `main` that wires Robot features together.
+
+## What does NOT belong in TIVA/
+
+- Board-agnostic protocol code or diagnostics. Those belong in `Robot/`.
+- Anything another board would need to copy to use.
+
+## When adding a feature
+
+If it could run on any other board with hardware glue swapped out, factor
+it into `Robot/` first, then adopt it here. Do not implement as a
+TIVA-local module that later has to be generalized.

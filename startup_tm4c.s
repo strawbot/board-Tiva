@@ -1,0 +1,95 @@
+.syntax unified
+.cpu cortex-m4
+.fpu fpv4-sp-d16
+.thumb
+
+/* Vector table */
+    .section .isr_vector,"a",%progbits
+    .word _estack
+    .word ResetISR
+    .word NMI_Handler
+    .word HardFault_Handler
+    .word MemManage_Handler
+    .word BusFault_Handler
+    .word UsageFault_Handler
+    .word 0
+    .word 0
+    .word 0
+    .word 0
+    .word SVC_Handler
+    .word DebugMon_Handler
+    .word 0
+    .word PendSV_Handler
+    .word SysTick_Handler
+
+    .rept 240
+      .word IntDefaultHandler
+    .endr
+
+/* Reset handler */
+    .section .text.ResetISR,"ax",%progbits
+    .global ResetISR
+ResetISR:
+    /* Copy data section from flash to RAM */
+    ldr r0, =__data_load_start
+    ldr r1, =__data_start__
+    ldr r2, =__data_end__
+1:
+    cmp r1, r2
+    bge 2f
+    ldr r3, [r0], #4
+    str r3, [r1], #4
+    b 1b
+2:
+    /* Zero initialize .bss */
+    ldr r0, =__bss_start__
+    ldr r1, =__bss_end__
+3:
+    cmp r0, r1
+    bge 4f
+    movs r2, #0
+    str r2, [r0], #4
+    b 3b
+4:
+    /* Call SystemInit if present */
+    bl SystemInit
+    /* Call main */
+    bl main
+hang:
+    b hang
+
+/* Default handlers */
+    .section .text.DefaultHandlers,"ax",%progbits
+    .global IntDefaultHandler
+IntDefaultHandler:
+    b .
+
+    .weak NMI_Handler
+    .set NMI_Handler, IntDefaultHandler
+    .weak HardFault_Handler
+    .set HardFault_Handler, IntDefaultHandler
+    .weak MemManage_Handler
+    .set MemManage_Handler, IntDefaultHandler
+    .weak BusFault_Handler
+    .set BusFault_Handler, IntDefaultHandler
+    .weak UsageFault_Handler
+    .set UsageFault_Handler, IntDefaultHandler
+    .weak SVC_Handler
+    .set SVC_Handler, IntDefaultHandler
+    .weak DebugMon_Handler
+    .set DebugMon_Handler, IntDefaultHandler
+    .weak PendSV_Handler
+    .set PendSV_Handler, IntDefaultHandler
+    .weak SysTick_Handler
+    .set SysTick_Handler, IntDefaultHandler
+
+    .section .rodata
+__data_load_start = .   /* linker will place data here */
+
+    .extern __data_start__
+    .extern __data_end__
+    .extern __bss_start__
+    .extern __bss_end__
+    .extern main
+    .extern SystemInit
+

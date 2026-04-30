@@ -1,0 +1,42 @@
+/**
+ * These arguments were used when this file was generated. They will be automatically applied on subsequent loads
+ * via the GUI or CLI. Run CLI with '--help' for additional information on how to override these arguments.
+ * @cliArgs --device "TM4C123x" --part "TM4C123GH6PM" --package "64 Pin QFP|16x16"
+ * @v2CliArgs --device "TM4C123GH6PM" --package "LQFP (PM)"
+ * @versions {"tool":"1.27.0+4565"}
+ */
+
+/**
+ * These are the peripherals and settings in this configuration
+ */
+const GPIO1        = scripting.addPeripheral("GPIO");
+GPIO1["0"].io      = "output";
+GPIO1["0"].$assign = "PC5";
+GPIO1.$name        = "Red_LED";
+const GPIO2        = scripting.addPeripheral("GPIO");
+GPIO2["0"].io      = "output";
+GPIO2["0"].$assign = "PC4";
+GPIO2.$name        = "Yel_LED";
+const Timer1       = scripting.addPeripheral("Timer");
+Timer1.$name       = "tick_timer";
+Timer1.$assign     = "Timer0";
+Timer1.CCP0.$used  = false;
+Timer1.CCP1.$used  = false;
+const Timer2       = scripting.addPeripheral("Timer");
+Timer2.$name       = "dela_timer";
+Timer2.$assign     = "Timer1";
+Timer2.CCP0.$used  = false;
+Timer2.CCP1.$used  = false;
+const UART1        = scripting.addPeripheral("UART");
+UART1.$name        = "MyUART1";
+UART1.$assign      = "UART2";
+UART1.RTS.$used    = false;
+UART1.CTS.$used    = false;
+
+/**
+ * Pinmux solution for unlocked pins/peripherals. This ensures that minor changes to the automatic solver in a future
+ * version of the tool will not impact the pinmux you originally saw.  These lines can be completely deleted in order to
+ * re-solve from scratch.
+ */
+UART1.RX.$suggestSolution = "PD6";
+UART1.TX.$suggestSolution = "PD7";

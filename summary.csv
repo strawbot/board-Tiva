@@ -1,0 +1,5 @@
+Pin#, PORT IO, Function, Pull Down, Pull Up, Direction, User Name
+15, PC5, GPIO_PC5, false, false, Output, Red_LED
+16, PC4, GPIO_PC4, false, false, Output, Yel_LED
+53, PD6, U2RX, , , , MyUART1
+10, PD7, U2TX, , , , MyUART1

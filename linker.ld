@@ -1,4 +1,4 @@
-/* Minimal linker script for TM4C123 (32KB RAM, 128KB flash) */
+/* Linker script for TM4C123GH6PM — 256KB flash, 32KB SRAM */
 
 ENTRY(ResetISR)
 
@@ -8,47 +8,45 @@ MEMORY
     RAM   (rwx) : ORIGIN = 0x20000000, LENGTH = 32K
 }
 
-_estack = 0x20008000; /* end of RAM */
+_estack = ORIGIN(RAM) + LENGTH(RAM);
 
 SECTIONS
 {
-  .isr_vector :
-  {
-    KEEP(*(.isr_vector))
-  } > FLASH
+    /* Vector table — must be first in flash */
+    .isr_vector :
+    {
+        KEEP(*(.isr_vector))
+    } > FLASH
 
-.text :
-  {
-      KEEP(*(.isr_vector))    /* match startup_tm4c.s exactly */
-      *(.text*)
-      *(.rodata*)
-  } > FLASH
+    /* Code and read-only data */
+    .text :
+    {
+        *(.text*)
+        *(.rodata*)
+    } > FLASH
 
-  .ARM.extab   : { *(.ARM.extab* ) } > FLASH
-  .ARM.exidx   : { *(.ARM.exidx* ) } > FLASH
+    .ARM.extab : { *(.ARM.extab*) } > FLASH
+    .ARM.exidx : { *(.ARM.exidx*) } > FLASH
 
-  .data : AT(ADDR(.text) + SIZEOF(.text))
-  {
-    __data_start__ = .;
-    *(.data .data.*)
-    __data_end__ = .;
-  } > RAM
+    /* Initialised data: stored in flash, copied to RAM by ResetISR */
+    .data :
+    {
+        __data_start__ = .;
+        *(.data .data.*)
+        __data_end__ = .;
+    } > RAM AT > FLASH
 
-  .bss :
-  {
-    __bss_start__ = .;
-    *(.bss .bss.*)
-    *(COMMON)
-    __bss_end__ = .;
-  } > RAM
+    /* LMA of .data — used by ResetISR copy loop */
+    __data_load_start = LOADADDR(.data);
 
-  .stack (NOLOAD) :
-  {
-    . = ALIGN(8);
-    __stack_start__ = .;
-    . = . + 0x400; /* 1KB stack reserved (adjust if needed) */
-    __stack_end__ = .;
-  } > RAM
+    /* Zero-initialised data */
+    .bss :
+    {
+        __bss_start__ = .;
+        *(.bss .bss.*)
+        *(COMMON)
+        __bss_end__ = .;
+    } > RAM
 
-  /DISCARD/ : { *(.eh_frame) }
+    /DISCARD/ : { *(.eh_frame) }
 }

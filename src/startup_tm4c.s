@@ -1,7 +1,7 @@
 .syntax unified
+.thumb
 .cpu cortex-m4
 .fpu fpv4-sp-d16
-.thumb
 
 /* Vector table */
     .section .isr_vector,"a",%progbits
@@ -22,7 +22,14 @@
     .word PendSV_Handler
     .word SysTick_Handler
 
-    .rept 240
+    /* IRQ0–IRQ18 */
+    .rept 19
+      .word IntDefaultHandler
+    .endr
+    /* IRQ19: Timer0A */
+    .word Timer0AIntHandler
+    /* IRQ20–IRQ239 */
+    .rept 220
       .word IntDefaultHandler
     .endr
 
@@ -92,10 +99,10 @@ IntDefaultHandler:
     .set PendSV_Handler, IntDefaultHandler
     .weak SysTick_Handler
     .set SysTick_Handler, IntDefaultHandler
+    .weak Timer0AIntHandler
+    .set Timer0AIntHandler, IntDefaultHandler
 
-    .section .rodata
-__data_load_start = .   /* linker will place data here */
-
+    .extern __data_load_start
     .extern __data_start__
     .extern __data_end__
     .extern __bss_start__

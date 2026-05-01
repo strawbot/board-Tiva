@@ -1,30 +1,32 @@
 #include <stdint.h>
-#include "tm4c123gh6pm.h"
+#include <stdbool.h>
+#include "inc/hw_memmap.h"
+#include "inc/hw_nvic.h"
+#include "inc/hw_types.h"
+#include "driverlib/sysctl.h"
+#include "driverlib/gpio.h"
+#include "pinout.h"   // SysConfig-generated
 
-#define SYSCTL_RCGCGPIO_R       (*((volatile uint32_t *)0x400FE608))
-#define GPIO_PORTF_DIR_R        (*((volatile uint32_t *)0x40025400 + (0x400/4)))
-#define GPIO_PORTF_DEN_R        (*((volatile uint32_t *)0x4002551C))
-#define GPIO_PORTF_DATA_R       (*((volatile uint32_t *)0x400253FC))
+// Adjust to match your SysConfig output — e.g., PF1 for yellow
+#define LED_PORT_BASE   GPIO_PORTC_BASE
+#define LED_PERIPH      SYSCTL_PERIPH_GPIOC
+#define LED_PIN         GPIO_PIN_4
 
-void delay(volatile uint32_t count) {
-    while (count--) { __asm__("nop"); }
-}
+int main(void)
+{
+    // 80 MHz from PLL, 16 MHz crystal
+    SysCtlClockSet(SYSCTL_SYSDIV_2_5 | SYSCTL_USE_PLL |
+                   SYSCTL_OSC_MAIN   | SYSCTL_XTAL_16MHZ);
 
-int main(void) {
-    /* Enable GPIOF clock */
-    SYSCTL_RCGCGPIO_R |= 0x20;
-    /* small delay for clock to stabilize */
-    for (volatile int i = 0; i < 1000; i++) { __asm__("nop"); }
+    PinoutSet();   // applies all pin assignments from SysConfig
 
-    /* PF1 as output (red LED on many Tiva boards) */
-    GPIO_PORTF_DIR_R |= (1 << 1);
-    GPIO_PORTF_DEN_R |= (1 << 1);
-
-    while (1) {
-        GPIO_PORTF_DATA_R |= (1 << 1);   /* LED on */
-        delay(2000000);
-        GPIO_PORTF_DATA_R &= ~(1 << 1);  /* LED off */
-        delay(2000000);
+    // Then enable peripherals and configure via TivaWare driverlib directly
+    SysCtlPeripheralEnable(LED_PERIPH);
+    while (!SysCtlPeripheralReady(LED_PERIPH)) {}
+    while(1) {
+        GPIOPinTypeGPIOOutput(LED_PORT_BASE, LED_PIN);
+        SysCtlDelay(SysCtlClockGet() / 3);   // ~1 s on
+        GPIOPinWrite(LED_PORT_BASE, LED_PIN, 0);
+        SysCtlDelay(SysCtlClockGet() / 3);   // ~1 s off
     }
-    return 0;
 }

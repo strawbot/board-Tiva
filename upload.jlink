@@ -1,0 +1,6 @@
+r
+h
+loadfile .pio/build/mini_m4_tiva/firmware.bin
+r
+g
+exit

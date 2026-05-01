@@ -29,7 +29,16 @@
 /* Reset handler */
     .section .text.ResetISR,"ax",%progbits
     .global ResetISR
+    .thumb_func
 ResetISR:
+    /* Enable FPU - must happen before ANY other code when using hard float ABI */
+    ldr    r0, =0xE000ED88    /* CPACR */
+    ldr    r1, [r0]         
+    orr    r1, r1, #(0xF << 20) /* CP10 + CP11 full access */
+    str    r1, [r0]
+    dsb                     
+    isb                     
+
     /* Copy data section from flash to RAM */
     ldr r0, =__data_load_start
     ldr r1, =__data_start__
@@ -61,6 +70,7 @@ hang:
 /* Default handlers */
     .section .text.DefaultHandlers,"ax",%progbits
     .global IntDefaultHandler
+    .thumb_func
 IntDefaultHandler:
     b .
 

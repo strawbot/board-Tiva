@@ -4,8 +4,8 @@ ENTRY(ResetISR)
 
 MEMORY
 {
-  FLASH (rx) : ORIGIN = 0x00000000, LENGTH = 128K
-  RAM   (rwx): ORIGIN = 0x20000000, LENGTH = 32K
+    FLASH (rx)  : ORIGIN = 0x00000000, LENGTH = 256K
+    RAM   (rwx) : ORIGIN = 0x20000000, LENGTH = 32K
 }
 
 _estack = 0x20008000; /* end of RAM */
@@ -17,12 +17,11 @@ SECTIONS
     KEEP(*(.isr_vector))
   } > FLASH
 
-  .text :
+.text :
   {
-    *(.text .text.*)
-    *(.rodata .rodata.*)
-    KEEP(*(.init))
-    KEEP(*(.fini))
+      KEEP(*(.isr_vector))    /* match startup_tm4c.s exactly */
+      *(.text*)
+      *(.rodata*)
   } > FLASH
 
   .ARM.extab   : { *(.ARM.extab* ) } > FLASH

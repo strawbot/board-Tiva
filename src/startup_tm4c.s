@@ -28,8 +28,18 @@
     .endr
     /* IRQ19: Timer0A */
     .word Timer0AIntHandler
-    /* IRQ20–IRQ239 */
-    .rept 220
+    /* IRQ20: Timer0B */
+    .word IntDefaultHandler
+    /* IRQ21: Timer1A */
+    .word Timer1AIntHandler
+    /* IRQ22–IRQ32 */
+    .rept 11
+      .word IntDefaultHandler
+    .endr
+    /* IRQ33: UART2 */
+    .word UART2IntHandler
+    /* IRQ34–IRQ239 */
+    .rept 206
       .word IntDefaultHandler
     .endr
 
@@ -101,6 +111,10 @@ IntDefaultHandler:
     .set SysTick_Handler, IntDefaultHandler
     .weak Timer0AIntHandler
     .set Timer0AIntHandler, IntDefaultHandler
+    .weak Timer1AIntHandler
+    .set Timer1AIntHandler, IntDefaultHandler
+    .weak UART2IntHandler
+    .set UART2IntHandler, IntDefaultHandler
 
     .extern __data_load_start
     .extern __data_start__

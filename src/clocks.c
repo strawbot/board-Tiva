@@ -61,11 +61,11 @@ static void blink_leds(void) {
     Long t;
     static enum { HB1, GAP1, HB2, GAP2 } phase = GAP2;
     switch (phase) {
-    case HB1:   hb_on();  phase = GAP1; t = msec(2);             break;
-    case GAP1:  hb_off(); phase = HB2;  t = msec(200) - msec(2); break;
-    case HB2:   hb_on();  phase = GAP2; t = msec(2);             break;
+    case HB1:   hb_on();  phase = GAP1; t = msec(3);             break;
+    case GAP1:  hb_off(); phase = HB2;  t = msec(200) - msec(3); break;
+    case HB2:   hb_on();  phase = GAP2; t = msec(3);             break;
     default:
-    case GAP2:  hb_off(); phase = HB1;  t = msec(800) - msec(2); break;
+    case GAP2:  hb_off(); phase = HB1;  t = msec(800) - msec(3); break;
     }
     in(t, blink_leds);
 }

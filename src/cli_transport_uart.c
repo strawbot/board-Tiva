@@ -1,4 +1,4 @@
-// cli_transport_uart.c — UART2 / uDMA CLI transport for TIVA (TM4C123GH6PM)
+// cli_transport_uart.c — UART2 interrupt-driven CLI transport for TIVA (TM4C123GH6PM)
 //
 // ── UART2 on PD6 (Rx) / PD7 (Tx), 115 200 baud, 8-N-1 ───────────────────
 //
@@ -6,13 +6,15 @@
 // commit unlock sequence must run before any alternate-function or direction
 // write to PD7 will take effect.
 //
-// ── TX: uDMA channel 13 (UART2 TX primary assignment) ────────────────────
+// ── TX: UART2 TX FIFO / UART_INT_TX interrupt ────────────────────────────
 //
-// output() is called by the TimbreOS main loop (OUTPUT_BLOCKED / OUTPUT_FLUSH)
-// to drain the emitq byte queue.  It copies up to TX_BUF_SIZE bytes into a
-// DMA-safe staging buffer and starts a basic-mode uDMA transfer to the UART2
-// data register.  The UART2 ISR's DMATX flag fires when the transfer
-// completes; if emitq still has data a new transfer is kicked off immediately.
+// output() is called by the TimbreOS main loop (EmitEvent) whenever a byte
+// is queued in emitq.  It enables UART_INT_TX to kick off the TX stream.
+//
+// UART_INT_TX fires while the TX FIFO is at or below the TX threshold
+// (UART_FIFO_TX1_8 = 2 bytes).  The ISR pumps bytes from emitq into the
+// FIFO until the FIFO is full or emitq is empty, then disables UART_INT_TX
+// to avoid spurious re-fires when the queue is drained.
 //
 // ── RX: UART FIFO / timeout interrupt ────────────────────────────────────
 //
@@ -30,7 +32,6 @@
 #include "driverlib/gpio.h"
 #include "driverlib/pin_map.h"
 #include "driverlib/uart.h"
-#include "driverlib/udma.h"
 #include "driverlib/interrupt.h"
 
 #include "tea.h"
@@ -38,45 +39,23 @@
 #include "byteq.h"
 #include "printers.h"
 
-// ── uDMA control table ────────────────────────────────────────────────────
-// Must be 1024-byte aligned; one 32-byte entry per channel × 32 channels × 2
-// (primary + alternate) = 1024 bytes.
-static uint8_t udma_ctrl_table[1024] __attribute__((aligned(1024)));
-
-// ── TX staging buffer ─────────────────────────────────────────────────────
-#define TX_BUF_SIZE  64u
-
-static uint8_t   tx_buf[TX_BUF_SIZE];
-static volatile bool tx_dma_busy = false;
-
-// uDMA primary channel 13 = UART2 TX (TM4C123 Table 9-1)
-#define UART2_TX_DMA_CH  13u
-
-// ── Internal: start a DMA TX burst ───────────────────────────────────────
-static void tx_start_dma(void) {
-    uint32_t n = 0;
-    while (n < TX_BUF_SIZE && qbq(emitq)) {
-        tx_buf[n++] = pullbq(emitq);
-    }
-    if (n == 0) {
-        tx_dma_busy = false;
-        return;
-    }
-    tx_dma_busy = true;
-
-    uDMAChannelTransferSet(UART2_TX_DMA_CH | UDMA_PRI_SELECT,
-                           UDMA_MODE_BASIC,
-                           tx_buf,
-                           (void *)(UART2_BASE + UART_O_DR),
-                           n);
-    uDMAChannelEnable(UART2_TX_DMA_CH);
-}
-
-// ── output() — drain emitq via DMA ───────────────────────────────────────
-// Called from the main loop via OUTPUT_BLOCKED / OUTPUT_FLUSH.
+// ── output() — prime the TX FIFO, then arm the interrupt ─────────────────
+// Called via EmitEvent on every byte queued into emitq.
+//
+// UART_INT_TX (TXRIS) is transition-triggered: it fires when the FIFO
+// *drops to* the threshold, not merely because the FIFO is already empty.
+// Enabling the interrupt on an idle (empty) FIFO produces no transition and
+// TXRIS never asserts.  The fix is to prime the FIFO here directly; that
+// fills it, and as it drains past the threshold the ISR takes over.
 void output(void) {
-    if (!tx_dma_busy && qbq(emitq)) {
-        tx_start_dma();
+    // Write as many bytes as the FIFO will accept right now.
+    while (qbq(emitq) && !(HWREG(UART2_BASE + UART_O_FR) & UART_FR_TXFF)) {
+        HWREG(UART2_BASE + UART_O_DR) = pullbq(emitq);
+    }
+    // If emitq still has data, arm the TX interrupt so the ISR drains it
+    // as the FIFO falls back through the threshold.
+    if (qbq(emitq)) {
+        UARTIntEnable(UART2_BASE, UART_INT_TX);
     }
 }
 
@@ -86,7 +65,6 @@ void UART2IntHandler(void) {
     UARTIntClear(UART2_BASE, status);
 
     // RX FIFO / idle timeout → push bytes into CLI key queue.
-
     if (status & (UART_INT_RX | UART_INT_RT)) {
         while (UARTCharsAvail(UART2_BASE)) {
             int32_t c = UARTCharGetNonBlocking(UART2_BASE);
@@ -96,10 +74,15 @@ void UART2IntHandler(void) {
         }
     }
 
-    // DMA TX done → restart if more data is waiting.
-    if (status & UART_INT_DMATX) {
-        tx_dma_busy = false;
-        tx_start_dma();
+    // TX FIFO at or below threshold — pump emitq into the FIFO.
+    if (status & UART_INT_TX) {
+        while (qbq(emitq) && !(HWREG(UART2_BASE + UART_O_FR) & UART_FR_TXFF)) {
+            HWREG(UART2_BASE + UART_O_DR) = pullbq(emitq);
+        }
+        if (!qbq(emitq)) {
+            // Queue drained — disable TX interrupt until next output() call.
+            UARTIntDisable(UART2_BASE, UART_INT_TX);
+        }
     }
 }
 
@@ -126,33 +109,13 @@ void uart_transport_init(void) {
                         UART_CONFIG_STOP_ONE |
                         UART_CONFIG_PAR_NONE);
     UARTFIFOEnable(UART2_BASE);
-    // RX fires at 1/8 full (2 bytes); TX threshold irrelevant — DMA drives TX.
+    // TX fires at ≤ 2 bytes remaining; RX fires at ≥ 2 bytes received.
     UARTFIFOLevelSet(UART2_BASE, UART_FIFO_TX1_8, UART_FIFO_RX1_8);
 
-    // Enable RX, RX-timeout, and DMA-TX-done interrupts.
-    UARTIntEnable(UART2_BASE, UART_INT_RX | UART_INT_RT | UART_INT_DMATX);
+    // Enable RX and RX-timeout interrupts.
+    // UART_INT_TX is enabled on demand by output(); not needed at init.
+    UARTIntEnable(UART2_BASE, UART_INT_RX | UART_INT_RT);
     IntEnable(INT_UART2);
-
-    // ── uDMA ─────────────────────────────────────────────────────────────
-    SysCtlPeripheralEnable(SYSCTL_PERIPH_UDMA);
-    while (!SysCtlPeripheralReady(SYSCTL_PERIPH_UDMA)) {}
-    uDMAEnable();
-    uDMAControlBaseSet(udma_ctrl_table);
-
-    // Channel 13: UART2 TX, primary select, basic mode, byte transfers.
-    uDMAChannelAttributeDisable(UART2_TX_DMA_CH,
-                                UDMA_ATTR_ALTSELECT  |
-                                UDMA_ATTR_USEBURST   |
-                                UDMA_ATTR_HIGH_PRIORITY |
-                                UDMA_ATTR_REQMASK);
-    uDMAChannelControlSet(UART2_TX_DMA_CH | UDMA_PRI_SELECT,
-                          UDMA_SIZE_8     |
-                          UDMA_SRC_INC_8  |
-                          UDMA_DST_INC_NONE |
-                          UDMA_ARB_4);
-
-    // Wire uDMA to UART2 TX FIFO.
-    UARTDMAEnable(UART2_BASE, UART_DMA_TX);
 
     UARTEnable(UART2_BASE);
 

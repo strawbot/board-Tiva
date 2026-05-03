@@ -25,11 +25,15 @@
 #include "cli.h"
 #include "clocks.h"
 #include "cli_transport_uart.h"
+#include "canary.h"
 
 // init_cli is defined in TimbreOS/cli.c but not declared in cli.h.
 void init_cli(void);
 
 int main(void) {
+    // Fill unused stack with 0xDEADBEEF before any deep call chain.
+    stack_canary_init();
+
     // 80 MHz from PLL, 16 MHz external crystal.
     SysCtlClockSet(SYSCTL_SYSDIV_2_5 | SYSCTL_USE_PLL |
                    SYSCTL_OSC_MAIN   | SYSCTL_XTAL_16MHZ);

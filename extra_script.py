@@ -19,12 +19,16 @@ timbre_dir    = os.path.join(project_dir, "..", "TimbreOS")
 wordlists_dir = os.path.join(timbre_dir, "WordLists")
 src_dir       = os.path.join(project_dir, "src")
 parsewords    = os.path.join(wordlists_dir, "parsewords.py")
-clibindings   = os.path.join(wordlists_dir, "clibindings.txt")
+clibindings   = os.path.join(src_dir, "tivawords.txt")
 
-def regen_wordlist(source, target, env):
-    if not os.path.isfile(parsewords):
-        print("extra_script: parsewords.py not found — skipping")
-        return
+# Run immediately at script-load time, before SCons constructs the build
+# graph.  AddPreAction fires after source scanning, so generated files
+# written that way aren't seen until the next build.  Top-level execution
+# here means wordlist.c and help.c are on disk before SCons decides what
+# to compile.
+if not os.path.isfile(parsewords):
+    print("extra_script: parsewords.py not found — skipping wordlist regen")
+else:
     result = subprocess.run(
         ["python3", parsewords, clibindings],
         cwd=wordlists_dir,
@@ -32,17 +36,15 @@ def regen_wordlist(source, target, env):
     )
     if result.returncode != 0:
         print("extra_script: parsewords.py failed:\n", result.stderr)
-        return
-    # Copy generated files into TIVA/src/
-    for name in ("wordlist.c", "help.c"):
-        src  = os.path.join(wordlists_dir, name)
-        dest = os.path.join(src_dir, name)
-        if os.path.isfile(src):
-            import shutil
-            shutil.copy2(src, dest)
-    print("extra_script: wordlist.c + help.c refreshed in", src_dir)
-
-env.AddPreAction("$BUILD_DIR/${PROGNAME}.elf", regen_wordlist)
+    else:
+        print("Results:", result.stdout)
+        # import shutil
+        # for name in ("wordlist.c", "help.c"):
+        #     src_file = os.path.join(wordlists_dir, name)
+        #     dest     = os.path.join(src_dir, name)
+        #     if os.path.isfile(src_file):
+        #         shutil.copy2(src_file, dest)
+        # print("extra_script: wordlist.c + help.c refreshed in", src_dir)
 
 # ── Post-build: produce firmware.bin and firmware.hex ─────────────────────
 

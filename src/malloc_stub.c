@@ -110,6 +110,17 @@ void *calloc(size_t nmemb, size_t size) {
     return p;
 }
 
+// ── _sbrk ─────────────────────────────────────────────────────────────────────
+// Newlib's _sbrk_r wrapper requires this symbol even when malloc is replaced.
+// Return -1 to indicate that dynamic heap growth is not available; all
+// allocation goes through the static pool above.
+
+#include <stdint.h>
+void *_sbrk(intptr_t increment) {
+    (void)increment;
+    return (void *)-1;
+}
+
 // ── realloc ───────────────────────────────────────────────────────────────────
 
 void *realloc(void *ptr, size_t size) {

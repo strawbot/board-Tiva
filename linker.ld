@@ -8,7 +8,8 @@ MEMORY
     RAM   (rwx) : ORIGIN = 0x20000000, LENGTH = 32K
 }
 
-_estack = ORIGIN(RAM) + LENGTH(RAM);
+_estack        = ORIGIN(RAM) + LENGTH(RAM);
+_Min_Stack_Size = 0x800;   /* 2 KB stack budget — adjust if needed */
 
 SECTIONS
 {
@@ -47,6 +48,8 @@ SECTIONS
         *(COMMON)
         __bss_end__ = .;
     } > RAM
+
+    _sstack = __bss_end__;   /* canary: bottom of free RAM (end of BSS) */
 
     /DISCARD/ : { *(.eh_frame) }
 }

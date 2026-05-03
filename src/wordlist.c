@@ -21,6 +21,13 @@ void cii(void);
 
 // Words
 NAMES(wordnames)
+	NAME("show-sys")		//  show system info: clock frequencies and uptime
+	NAME("show-time")		//  show delta timer state and UTC tick counter
+	NAME("show-timers")		//  dump TIM1-TIM14 and RTC: clock gate, CEN, direction, PSC, ARR, CNT, active CC channels
+	NAME("reboot")		//  reboot the device via NVIC system reset
+	NAME("show-cli")		//  display cli status
+	NAME("show-stack")		//  show stack high-water mark and overflow status
+	NAME("pins")		//  show all pins and states
 	NAME("help")		//  <filtering> print words with one line help; allow wild card <filtering>; parenthesis show ( args - results ) and precede the command; angle brackets show arguments that follow commands
 	NAME("words")		//  list all words in dictionary
 	NAME("dup")		//  ( n - n n ) make a copy of the top data stack item
@@ -98,8 +105,38 @@ NAMES(wordnames)
 	NAME("constant")		//  ( n - ) <string> give n a name
 	NAME("variable")		//  ( n - ) <string> give n a place to be stored at a name
 	NAME("]")		//  enter macro build
+	NAME("tabto")		//  (n) move ahead to line position n
+	NAME("key")		//  ( - c ) return character c from key queue or 0
+	NAME("key?")		//  ( - f ) return true if there is a key in the keyq
+	NAME("te")		//  print counter, compare value and list of time event actions with due dates
+	NAME("telist")		//  print TE todo and done list of time events
+	NAME("pa")		//  print actions in queue
+	NAME("tn")		//  dump out names in action name array
+	NAME("mstats")		//  list stats for machines
+	NAME("0stats")		//  initialize stats to zero
+	NAME("teakeycosts")		//  show key hashes and clustering of teatimes table
+	NAME("latency")		//  show latency stats for time events and actions
+	NAME("0latency")		//  zero the latency stats; sampled every 10s
+	NAME("testtime")		//  ( s ) test ticks, timeouts and time for s seconds
+	NAME("tickms")		//  ( tick - ms ) convert tick to milliseconds
+	NAME("gtt")		//  print tick and time
+	NAME("start")		//  create a reference point
+	NAME("end")		//  print time from start
+	NAME("play")		//  play out events in event queue and restart recording
+	NAME("stop")		//  stop recording events
+	NAME("record")		//  start recording events
+	NAME("echoon")		//  turn on key echo
+	NAME("echooff")		//  turn off key echo
+	NAME("nap")		//  (n) take a nap for n milliseconds
 END_NAMES
 
+void show_sys(void);
+void show_timer(void);
+void show_timers(void);
+void do_reboot(void);
+void show_cli(void);
+void show_stack(void);
+void gpio_dump_all(void);
 void help(void);
 void words(void);
 void dup(void);
@@ -177,8 +214,38 @@ void colon(void);
 void constant(void);
 void variable(void);
 void righBracket(void);
+void cli_tabTo(void);
+void get_key(void);
+void ask_key(void);
+void print_te(void);
+void te_lists(void);
+void print_actions(void);
+void dumpTeaNames(void);
+void machineStats(void);
+void zeroMachineTimes(void);
+void show_key_costs(void);
+void show_latency(void);
+void reset_latency(void);
+void test_time(void);
+void ticks_ms(void);
+void get_tick_time(void);
+void cliStartTime(void);
+void cliEndTime(void);
+void play_events(void);
+void record_event_off(void);
+void record_events_on(void);
+void autoEchoOn(void);
+void autoEchoOff(void);
+void nap_for(void);
 
 BODIES(wordbodies)
+	BODY(show_sys)
+	BODY(show_timer)
+	BODY(show_timers)
+	BODY(do_reboot)
+	BODY(show_cli)
+	BODY(show_stack)
+	BODY(gpio_dump_all)
 	BODY(help)
 	BODY(words)
 	BODY(dup)
@@ -256,6 +323,29 @@ BODIES(wordbodies)
 	BODY(constant)
 	BODY(variable)
 	BODY(righBracket)
+	BODY(cli_tabTo)
+	BODY(get_key)
+	BODY(ask_key)
+	BODY(print_te)
+	BODY(te_lists)
+	BODY(print_actions)
+	BODY(dumpTeaNames)
+	BODY(machineStats)
+	BODY(zeroMachineTimes)
+	BODY(show_key_costs)
+	BODY(show_latency)
+	BODY(reset_latency)
+	BODY(test_time)
+	BODY(ticks_ms)
+	BODY(get_tick_time)
+	BODY(cliStartTime)
+	BODY(cliEndTime)
+	BODY(play_events)
+	BODY(record_event_off)
+	BODY(record_events_on)
+	BODY(autoEchoOn)
+	BODY(autoEchoOff)
+	BODY(nap_for)
 END_BODIES
 
 // Immediates

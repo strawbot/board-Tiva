@@ -10,27 +10,44 @@
 #include "ttypes.h"   // Cell, Long, Byte, vector, …
 
 // ── CLI parameters ────────────────────────────────────────────────────────
+// RAM sizing notes (see CLAUDE.md RAM-audit):
+//   LINE_LENGTH  → tib buffer (LINE_LENGTH + 8 bytes)
+//   EMITQ_SIZE   → emitq byte-queue (EMITQ_SIZE + 16 bytes in .data)
+//   KEYQ_SIZE    → keyq byte-queue  (KEYQ_SIZE  + 16 bytes in .data)
+//   HERE_SPACE   → hereSpace compiled-word buffer (.bss)
+// Increase LINE_LENGTH if long input lines are truncated.
+// Increase EMITQ_SIZE if output characters are dropped at high burst rates.
+// Increase HERE_SPACE if runtime word compilation overflows (CLI reports error).
 #define CLI_PARAMETERS
 #define CLI_TITLE       "ActiveRobot TIVA\n"
 #define DCELLS          20
 #define RCELLS          20
-#define LINE_LENGTH     200
-#define EMITQ_SIZE      400
 #define KEYQ_SIZE       80
+#define LINE_LENGTH     100
+#define EMITQ_SIZE      200
 #define PAD_SIZE        20
 #define PROMPTSTRING    "ar: "
 #define CUSHION         LINE_LENGTH
-#define HERE_SPACE      2000
+#define HERE_SPACE      1000
 #define OUTPUT_BLOCKED  output()
 #define OUTPUT_FLUSH    output()
 
 void output(void);
 
 // ── TEA scheduler ──────────────────────────────────────────────────────────
-#define NUM_ACTIONS  40
-#define NUM_TE       40
+// RAM sizing notes:
+//   NUM_ACTIONS → actionq slot array (.data)
+//   NUM_TE      → tes array + 4 hash-tables (teanames/teatimes + adjuncts, .bss)
+//                 Each table ≈ NUM_TE × 25 bytes; all four together dominate.
+//                 Current active TE count at runtime: blink_leds(1), alarm(1),
+//                 CLI tick(~2), heartbeat(1) → peak ≈ 8.  20 gives 2.5× headroom.
+//   N_EVENTS    → eventq ring buffer (8 bytes/event + 16-byte header, .data)
+// Raise NUM_TE if tea.c asserts BLACK_HOLE (TE slots exhausted).
+// Raise N_EVENTS if events are dropped under burst load.
+#define NUM_ACTIONS  20
+#define NUM_TE       20
 #define TEA_TABLE    HASH8
-#define N_EVENTS     100
+#define N_EVENTS     50
 #define FIRST_EVENT  (const char *)secs(5)
 
 // ONE_SECOND = 1000 → 1 tick = 1 ms.

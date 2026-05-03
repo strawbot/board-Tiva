@@ -24,7 +24,6 @@
  * =============================================================================*/
 
 #include <stdint.h>
-#include <stdio.h>              /* snprintf                                   */
 #include <ctype.h>
 #include "inc/hw_memmap.h"
 #include "inc/hw_types.h"
@@ -176,8 +175,6 @@ static void print_pin_row(uint8_t port_idx, uint8_t pin,
                           uint32_t den,   uint32_t amsel,
                           uint32_t pctl)
 {
-    char buf[12];
-
     uint32_t am  = (amsel      >> pin)        & 1u;
     uint32_t af  = (afsel      >> pin)        & 1u;
     uint32_t de  = (den        >> pin)        & 1u;
@@ -189,8 +186,8 @@ static void print_pin_row(uint8_t port_idx, uint8_t pin,
     const char *alias = find_alias(port_idx, pin);
 
     /* ── PIN ───────────── col 0 */
-    snprintf(buf, sizeof(buf), "%s%u", port_table[port_idx].prefix, pin);
-    print(buf);
+    print(port_table[port_idx].prefix);
+    printDec(pin);
     tabTo(6);
 
     /* ── NAME ──────────── col 6 */
@@ -288,8 +285,10 @@ void gpio_dump_all(void)
             if (pin_match) {
                 const char *match = stristr(alias, pin_match);
                 if (match == NULL) {
-                    char buf[6];
-                    snprintf(buf, sizeof(buf), "%s%u", port_table[p].prefix, pin);
+                    /* Build e.g. "PD6\0" without snprintf — prefix is always 2 chars, pin 0-7 */
+                    char buf[4] = { port_table[p].prefix[0],
+                                    port_table[p].prefix[1],
+                                    (char)('0' + pin), '\0' };
                     match = stristr(buf, pin_match);
                     if (match == NULL) { continue; }
                 }

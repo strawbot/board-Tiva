@@ -4,11 +4,23 @@
 // never reaches libc's nofp malloc objects (which cause VFP ABI
 // mismatch errors with -mfloat-abi=hard).
 //
-// Strategy: first-fit free-list allocator over a 6 KB static pool.
+// Strategy: first-fit free-list allocator over a 2 KB static pool.
 // Block header is 8 bytes; minimum allocation is 8 bytes.
 // Thread safety: interrupts are disabled around list traversal.
 // (The TEA scheduler is cooperative so contention is rare; the
 //  guard is there for ISR paths that might call malloc in future.)
+//
+// ── Pool sizing ───────────────────────────────────────────────────────────────
+// The pool serves the TimbreOS dictionary (runtime word definitions) and any
+// transient allocations during interpret/compile.  gpio_dump.c no longer uses
+// snprintf, so newlib's _svfprintf_r / _malloc_r no longer touch this pool.
+//
+// To find the actual high-water mark at runtime, inspect _head after a
+// representative session: walk the free-list and sum free bytes; subtract from
+// POOL_BYTES.  Increase if cli.c reports "out of memory" on word definition.
+//
+// With the compile-time wordlist (wordlist.c) pre-populating most words, only
+// interactively-defined words hit this pool.  2 KB handles ~50 small words.
 
 #include <stdint.h>
 #include <stddef.h>
@@ -16,7 +28,7 @@
 
 // ── pool ─────────────────────────────────────────────────────────────────────
 
-#define POOL_BYTES  6144u   // 6 KB — adjust if dictionary grows
+#define POOL_BYTES  2048u   // 2 KB — raise to 3072 if dictionary overflows
 
 typedef struct Block {
     uint32_t      size;   // usable bytes (excludes header)

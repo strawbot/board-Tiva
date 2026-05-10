@@ -99,7 +99,9 @@ void help(void) {
     printif("cmove   ( s d n - ) move n bytes from s to d\n");
     printif("constant   ( n - ) <string> give n a name\n");
     printif("cr   send end of line to output device\n");
+    printif("debug-usb   raw USB hardware registers + ISR counters — use when show-usb is stuck\n");
     printif("decimal   interpret all subsequent numbers as decimal\n");
+    printif("dfu-util   enter ROM USB DFU bootloader (proves USB HW vs SW problem; power-cycle to recover)\n");
     printif("drop   ( n - ) throw away the top data stack item\n");
     printif("dump   ( a n - ) dump n 16-byte rows of memory starting at address a\n");
     printif("dup   ( n - n n ) make a copy of the top data stack item\n");
@@ -122,8 +124,6 @@ void help(void) {
     printif("if  [i]  ( n - ) execute following code if top of stack is non-zero\n");
     printif("key   ( - c ) return character c from key queue or 0\n");
     printif("key?   ( - f ) return true if there is a key in the keyq\n");
-    printif("l!   (n a - )store next into memory using top as address (processor sized)\n");
-    printif("l@   ( a - n )return contents of memory using top stack item as the address (32 bit)\n");
     printif("latency   show latency stats for time events and actions\n");
     printif("max   ( n m - n|m) leave maximum of top two stack items\n");
     printif("min    ( n m - n|m) leave minimum of top two stack items\n");
@@ -139,6 +139,8 @@ void help(void) {
     printif("pa   print actions in queue\n");
     printif("pins   show all pins and states\n");
     printif("play   play out events in event queue and restart recording\n");
+    printif("probe-usb-pins   read D+/D- digitally to detect open traces or swapped wires\n");
+    printif("probe-vbus   test if VBUS comparator is connected to PB1 (AMSEL toggle diagnostic)\n");
     printif("r   ( - n ) (R n - n ) copy the top item of the return stack onto the data stack\n");
     printif("r>    ( - n ) (R n - ) move top item on return stack to data stack\n");
     printif("reboot   reboot the device via NVIC system reset\n");
@@ -149,9 +151,14 @@ void help(void) {
     printif("s@   ( a - h ) return contents of memory using top stack item as the address (16 bit)\n");
     printif("shift   ( n m - p ) shift n by m bit left for minus and right for positive\n");
     printif("show-cli   display cli status\n");
+    printif("show-http   show HTTP server connection counts\n");
+    printif("show-ip   show IP address, gateway, netmask, DHCP state\n");
+    printif("show-net   show lwIP protocol stats and config flags\n");
+    printif("show-stack   show stack high-water mark and overflow status\n");
     printif("show-sys   show system info: clock frequencies and uptime\n");
     printif("show-time   show delta timer state and UTC tick counter\n");
     printif("show-timers   dump TIM1-TIM14 and RTC: clock gate, CEN, direction, PSC, ARR, CNT, active CC channels\n");
+    printif("show-usb   show USB CDC-ECM state: enumeration, link, IP address\n");
     printif("sign   ( m n - n ) prepend sign to number sequence if m is negative\n");
     printif("sp!   ( ... - ) empty the data stack\n");
     printif("start   create a reference point\n");
@@ -162,12 +169,15 @@ void help(void) {
     printif("te   print counter, compare value and list of time event actions with due dates\n");
     printif("teakeycosts   show key hashes and clustering of teatimes table\n");
     printif("telist   print TE todo and done list of time events\n");
+    printif("test-usb-isr   software-pend USB0 IRQ to verify vector table and IntEnable are correct\n");
     printif("testtime   ( s ) test ticks, timeouts and time for s seconds\n");
     printif("tickms   ( tick - ms ) convert tick to milliseconds\n");
     printif("tn   dump out names in action name array\n");
     printif("type   ( a n - ) output n characters starting at a\n");
     printif("until  [i]  ( n - ) go back to the begin statement if stack is zero\n");
+    printif("usb-reconnect   drop D+ for 50 ms then reconnect — forces re-enumeration\n");
     printif("variable   ( n - ) <string> give n a place to be stored at a name\n");
+    printif("vbus-poll   live VBUS + ISR monitor for 10 s: hot-plug USB cable while running\n");
     printif("while  [i]  ( n - ) conditional choice in a loop construct\n");
     printif("words   list all words in dictionary\n");
     printif("xor   ( n m - p ) bitwise XOR top two data stack items and leave on top\n");

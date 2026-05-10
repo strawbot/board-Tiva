@@ -101,16 +101,22 @@ typedef struct {
 } PinAlias_t;
 
 static const PinAlias_t alias_table[] = {
+    /* ── port 1 = GPIOB ─────────────────── */
+    { 1, 1, "USB_VBUS" }, /* PB1  USB0 VBUS sense     */
+
     /* ── port 2 = GPIOC ─────────────────── */
-    { 2, 0, "TCK"    },   /* PC0  JTAG clock         */
-    { 2, 1, "TMS"    },   /* PC1  JTAG mode select    */
-    { 2, 2, "TDI"    },   /* PC2  JTAG data in        */
-    { 2, 3, "TDO"    },   /* PC3  JTAG data out / SWO */
-    { 2, 4, "HB_LED" },   /* PC4  heartbeat LED       */
+    { 2, 0, "TCK"      }, /* PC0  JTAG clock          */
+    { 2, 1, "TMS"      }, /* PC1  JTAG mode select     */
+    { 2, 2, "TDI"      }, /* PC2  JTAG data in         */
+    { 2, 3, "TDO"      }, /* PC3  JTAG data out / SWO  */
+    { 2, 4, "YEL_LED"  }, /* PC4  yellow heartbeat LED */
+    { 2, 5, "RED_LED"  }, /* PC5  red LED              */
 
     /* ── port 3 = GPIOD ─────────────────── */
-    { 3, 6, "CLI_RX" },   /* PD6  UART2 Rx            */
-    { 3, 7, "CLI_TX" },   /* PD7  UART2 Tx  (NMI pin) */
+    { 3, 4, "USB_DM"   }, /* PD4  USB0 D−              */
+    { 3, 5, "USB_DP"   }, /* PD5  USB0 D+              */
+    { 3, 6, "CLI_RX"   }, /* PD6  UART2 Rx             */
+    { 3, 7, "CLI_TX"   }, /* PD7  UART2 Tx  (NMI pin)  */
 };
 #define NUM_ALIASES  ( sizeof(alias_table) / sizeof(alias_table[0]) )
 

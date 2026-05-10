@@ -38,8 +38,14 @@
     .endr
     /* IRQ33: UART2 */
     .word UART2IntHandler
-    /* IRQ34–IRQ239 */
-    .rept 206
+    /* IRQ34–IRQ43 */
+    .rept 10
+      .word IntDefaultHandler
+    .endr
+    /* IRQ44: USB0 */
+    .word USB0IntHandler
+    /* IRQ45–IRQ239 */
+    .rept 195
       .word IntDefaultHandler
     .endr
 

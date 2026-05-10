@@ -22,5 +22,6 @@ static inline int isupper(int c)  { return (c >= 'A' && c <= 'Z'); }
 static inline int islower(int c)  { return (c >= 'a' && c <= 'z'); }
 static inline int isprint(int c)  { return (c >= 0x20 && c < 0x7F); }
 static inline int ispunct(int c)  { return (isprint(c) && !isalnum(c) && c != ' '); }
+static inline int isxdigit(int c) { return (isdigit(c) || (c>='a'&&c<='f') || (c>='A'&&c<='F')); }
 
 #endif /* CTYPE_H_ */

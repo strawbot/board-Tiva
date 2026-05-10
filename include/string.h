@@ -89,6 +89,31 @@ static inline char *strcat(char *dst, const char *src) {
     return dst;
 }
 
+static inline char *strncat(char *dst, const char *src, size_t n) {
+    char *d = dst;
+    while (*d) d++;
+    while (n-- && (*d++ = *src++) != '\0') {}
+    *d = '\0';
+    return dst;
+}
+
+static inline void *memchr(const void *s, int c, size_t n) {
+    const unsigned char *p = (const unsigned char *)s;
+    unsigned char        v = (unsigned char)c;
+    while (n--) { if (*p == v) return (void *)p; p++; }
+    return NULL;
+}
+
+static inline char *strstr(const char *haystack, const char *needle) {
+    if (!*needle) return (char *)haystack;
+    for (; *haystack; haystack++) {
+        const char *h = haystack, *n = needle;
+        while (*h && *n && *h == *n) { h++; n++; }
+        if (!*n) return (char *)haystack;
+    }
+    return NULL;
+}
+
 static inline char *strchr(const char *s, int c) {
     while (*s) {
         if (*s == (char)c) return (char *)s;

@@ -47,7 +47,9 @@ c@   ( a - c ) return contents of memory using top stack item as the address (8 
 cmove   ( s d n - ) move n bytes from s to d
 constant   ( n - ) <string> give n a name
 cr   send end of line to output device
+debug-usb   raw USB hardware registers + ISR counters — use when show-usb is stuck
 decimal   interpret all subsequent numbers as decimal
+dfu-util   enter ROM USB DFU bootloader (proves USB HW vs SW problem; power-cycle to recover)
 drop   ( n - ) throw away the top data stack item
 dump   ( a n - ) dump n 16-byte rows of memory starting at address a
 dup   ( n - n n ) make a copy of the top data stack item
@@ -70,8 +72,6 @@ hold   ( c - ) hold a character in number sequence
 if  [i]  ( n - ) execute following code if top of stack is non-zero
 key   ( - c ) return character c from key queue or 0
 key?   ( - f ) return true if there is a key in the keyq
-l!   (n a - )store next into memory using top as address (processor sized)
-l@   ( a - n )return contents of memory using top stack item as the address (32 bit)
 latency   show latency stats for time events and actions
 max   ( n m - n|m) leave maximum of top two stack items
 min    ( n m - n|m) leave minimum of top two stack items
@@ -87,6 +87,8 @@ over   ( n m - n m n ) copy 2nd data stack item to top of data stack
 pa   print actions in queue
 pins   show all pins and states
 play   play out events in event queue and restart recording
+probe-usb-pins   read D+/D- digitally to detect open traces or swapped wires
+probe-vbus   test if VBUS comparator is connected to PB1 (AMSEL toggle diagnostic)
 r   ( - n ) (R n - n ) copy the top item of the return stack onto the data stack
 r>    ( - n ) (R n - ) move top item on return stack to data stack
 reboot   reboot the device via NVIC system reset
@@ -97,9 +99,14 @@ s!   ( h a - ) store next into memory using top as address (16 bit)
 s@   ( a - h ) return contents of memory using top stack item as the address (16 bit)
 shift   ( n m - p ) shift n by m bit left for minus and right for positive
 show-cli   display cli status
+show-http   show HTTP server connection counts
+show-ip   show IP address, gateway, netmask, DHCP state
+show-net   show lwIP protocol stats and config flags
+show-stack   show stack high-water mark and overflow status
 show-sys   show system info: clock frequencies and uptime
 show-time   show delta timer state and UTC tick counter
 show-timers   dump TIM1-TIM14 and RTC: clock gate, CEN, direction, PSC, ARR, CNT, active CC channels
+show-usb   show USB CDC-ECM state: enumeration, link, IP address
 sign   ( m n - n ) prepend sign to number sequence if m is negative
 sp!   ( ... - ) empty the data stack
 start   create a reference point
@@ -110,12 +117,15 @@ tabto   (n) move ahead to line position n
 te   print counter, compare value and list of time event actions with due dates
 teakeycosts   show key hashes and clustering of teatimes table
 telist   print TE todo and done list of time events
+test-usb-isr   software-pend USB0 IRQ to verify vector table and IntEnable are correct
 testtime   ( s ) test ticks, timeouts and time for s seconds
 tickms   ( tick - ms ) convert tick to milliseconds
 tn   dump out names in action name array
 type   ( a n - ) output n characters starting at a
 until  [i]  ( n - ) go back to the begin statement if stack is zero
+usb-reconnect   drop D+ for 50 ms then reconnect — forces re-enumeration
 variable   ( n - ) <string> give n a place to be stored at a name
+vbus-poll   live VBUS + ISR monitor for 10 s: hot-plug USB cable while running
 while  [i]  ( n - ) conditional choice in a loop construct
 words   list all words in dictionary
 xor   ( n m - p ) bitwise XOR top two data stack items and leave on top

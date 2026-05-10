@@ -21,10 +21,21 @@ void cii(void);
 
 // Words
 NAMES(wordnames)
+	NAME("show-usb")		//  show USB CDC-ECM state: enumeration, link, IP address
+	NAME("debug-usb")		//  raw USB hardware registers + ISR counters — use when show-usb is stuck
+	NAME("usb-reconnect")		//  drop D+ for 50 ms then reconnect — forces re-enumeration
+	NAME("probe-usb-pins")		//  read D+/D- digitally to detect open traces or swapped wires
+	NAME("probe-vbus")		//  test if VBUS comparator is connected to PB1 (AMSEL toggle diagnostic)
+	NAME("vbus-poll")		//  live VBUS + ISR monitor for 10 s: hot-plug USB cable while running
+	NAME("show-ip")		//  show IP address, gateway, netmask, DHCP state
+	NAME("show-net")		//  show lwIP protocol stats and config flags
+	NAME("show-http")		//  show HTTP server connection counts
 	NAME("show-sys")		//  show system info: clock frequencies and uptime
 	NAME("show-time")		//  show delta timer state and UTC tick counter
 	NAME("show-timers")		//  dump TIM1-TIM14 and RTC: clock gate, CEN, direction, PSC, ARR, CNT, active CC channels
 	NAME("reboot")		//  reboot the device via NVIC system reset
+	NAME("dfu-util")		//  enter ROM USB DFU bootloader (proves USB HW vs SW problem; power-cycle to recover)
+	NAME("test-usb-isr")		//  software-pend USB0 IRQ to verify vector table and IntEnable are correct
 	NAME("show-cli")		//  display cli status
 	NAME("show-stack")		//  show stack high-water mark and overflow status
 	NAME("pins")		//  show all pins and states
@@ -64,8 +75,6 @@ NAMES(wordnames)
 	NAME("c!")		//  ( c a - ) store next into memory using top as address (8 bit)
 	NAME("s@")		//  ( a - h ) return contents of memory using top stack item as the address (16 bit)
 	NAME("s!")		//  ( h a - ) store next into memory using top as address (16 bit)
-	NAME("l@")		//  ( a - n )return contents of memory using top stack item as the address (32 bit)
-	NAME("l!")		//  (n a - )store next into memory using top as address (processor sized)
 	NAME("+b")		//  ( b a - ) turn on b bits at address a: 0b10001 em +b
 	NAME("-b")		//  ( b a - ) turn off b bits at address a: 0b10001 em -b
 	NAME("cmove")		//  ( s d n - ) move n bytes from s to d
@@ -130,10 +139,21 @@ NAMES(wordnames)
 	NAME("nap")		//  (n) take a nap for n milliseconds
 END_NAMES
 
+void show_usb(void);
+void debug_usb(void);
+void usb_reconnect(void);
+void probe_usb_pins(void);
+void probe_vbus(void);
+void vbus_poll(void);
+void show_ip(void);
+void show_net(void);
+void show_http(void);
 void show_sys(void);
 void show_timer(void);
 void show_timers(void);
 void do_reboot(void);
+void do_dfu(void);
+void test_usb_isr(void);
 void show_cli(void);
 void show_stack(void);
 void gpio_dump_all(void);
@@ -173,8 +193,6 @@ void byteFetch(void);
 void byteStore(void);
 void shortFetch(void);
 void shortStore(void);
-void longFetch(void);
-void longStore(void);
 void plusBits(void);
 void minusBits(void);
 void byteMove(void);
@@ -213,7 +231,7 @@ void resetCli(void);
 void colon(void);
 void constant(void);
 void variable(void);
-void righBracket(void);
+void rightBracket(void);
 void cli_tabTo(void);
 void get_key(void);
 void ask_key(void);
@@ -239,10 +257,21 @@ void autoEchoOff(void);
 void nap_for(void);
 
 BODIES(wordbodies)
+	BODY(show_usb)
+	BODY(debug_usb)
+	BODY(usb_reconnect)
+	BODY(probe_usb_pins)
+	BODY(probe_vbus)
+	BODY(vbus_poll)
+	BODY(show_ip)
+	BODY(show_net)
+	BODY(show_http)
 	BODY(show_sys)
 	BODY(show_timer)
 	BODY(show_timers)
 	BODY(do_reboot)
+	BODY(do_dfu)
+	BODY(test_usb_isr)
 	BODY(show_cli)
 	BODY(show_stack)
 	BODY(gpio_dump_all)
@@ -282,8 +311,6 @@ BODIES(wordbodies)
 	BODY(byteStore)
 	BODY(shortFetch)
 	BODY(shortStore)
-	BODY(longFetch)
-	BODY(longStore)
 	BODY(plusBits)
 	BODY(minusBits)
 	BODY(byteMove)
@@ -322,7 +349,7 @@ BODIES(wordbodies)
 	BODY(colon)
 	BODY(constant)
 	BODY(variable)
-	BODY(righBracket)
+	BODY(rightBracket)
 	BODY(cli_tabTo)
 	BODY(get_key)
 	BODY(ask_key)

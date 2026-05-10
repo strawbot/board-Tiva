@@ -32,11 +32,20 @@ UART1.$name        = "MyUART1";
 UART1.$assign      = "UART2";
 UART1.RTS.$used    = false;
 UART1.CTS.$used    = false;
+const USB1         = scripting.addPeripheral("USB");
+USB1.$name         = "TIVA";
+USB1.$assign       = "USB0";
+USB1.EPEN.$used    = false;
+USB1.PFLT.$used    = false;
+USB1.ID.$used      = false;
 
 /**
  * Pinmux solution for unlocked pins/peripherals. This ensures that minor changes to the automatic solver in a future
  * version of the tool will not impact the pinmux you originally saw.  These lines can be completely deleted in order to
  * re-solve from scratch.
  */
-UART1.RX.$suggestSolution = "PD6";
-UART1.TX.$suggestSolution = "PD7";
+UART1.RX.$suggestSolution  = "PD6";
+UART1.TX.$suggestSolution  = "PD7";
+USB1.VBUS.$suggestSolution = "PB1";
+USB1.DP.$suggestSolution   = "PD5";
+USB1.DM.$suggestSolution   = "PD4";

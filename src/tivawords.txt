@@ -3,11 +3,25 @@
 // Generates: help.c  wordlist.c  wordlist.txt
 // Include clibindings.txt and floatwords.txt for full CLI support.
 
+Words // network
+	show-usb		show_usb		// show USB CDC-ECM state: enumeration, link, IP address
+	debug-usb		debug_usb		// raw USB hardware registers + ISR counters — use when show-usb is stuck
+	usb-reconnect	usb_reconnect	// drop D+ for 50 ms then reconnect — forces re-enumeration
+	probe-usb-pins	probe_usb_pins	// read D+/D- digitally to detect open traces or swapped wires
+	probe-vbus		probe_vbus		// test if VBUS comparator is connected to PB1 (AMSEL toggle diagnostic)
+	vbus-poll		vbus_poll		// live VBUS + ISR monitor for 10 s: hot-plug USB cable while running
+	show-ip			show_ip			// show IP address, gateway, netmask, DHCP state
+	show-net		show_net		// show lwIP protocol stats and config flags
+	show-http		show_http		// show HTTP server connection counts
+End
+
 Words // system
 	show-sys		show_sys		// show system info: clock frequencies and uptime
 	show-time		show_timer		// show delta timer state and UTC tick counter
 	show-timers		show_timers		// dump TIM1-TIM14 and RTC: clock gate, CEN, direction, PSC, ARR, CNT, active CC channels
 	reboot			do_reboot		// reboot the device via NVIC system reset
+	dfu-util		do_dfu			// enter ROM USB DFU bootloader (proves USB HW vs SW problem; power-cycle to recover)
+	test-usb-isr	test_usb_isr	// software-pend USB0 IRQ to verify vector table and IntEnable are correct
 	show-cli		show_cli		// display cli status
 	show-stack		show_stack		// show stack high-water mark and overflow status
 	pins			gpio_dump_all	// show all pins and states

@@ -3,3 +3,6 @@ Pin#, PORT IO, Function, Pull Down, Pull Up, Direction, User Name
 16, PC4, GPIO_PC4, false, false, Output, Yel_LED
 53, PD6, U2RX, , , , MyUART1
 10, PD7, U2TX, , , , MyUART1
+46, PB1, USB0VBUS, , , , TIVA
+44, PD5, USB0DP, , , , TIVA
+43, PD4, USB0DM, , , , TIVA

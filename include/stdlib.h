@@ -20,6 +20,38 @@ static inline int  abs (int  n)  { return n < 0 ? -n : n; }
 static inline long labs(long n)  { return n < 0 ? -n : n; }
 
 // ── string → number ───────────────────────────────────────────────────────────
+static inline unsigned long strtoul(const char *s, char **endptr, int base) {
+    while (*s == ' ' || *s == '\t') s++;
+    if (base == 0) {
+        if (s[0] == '0' && (s[1] == 'x' || s[1] == 'X')) { base = 16; s += 2; }
+        else if (s[0] == '0') { base = 8; s++; }
+        else base = 10;
+    } else if (base == 16 && s[0] == '0' && (s[1]=='x'||s[1]=='X')) { s += 2; }
+    unsigned long n = 0;
+    const char *start = s;
+    while (*s) {
+        int d;
+        if (*s >= '0' && *s <= '9')      d = *s - '0';
+        else if (*s >= 'a' && *s <= 'f') d = *s - 'a' + 10;
+        else if (*s >= 'A' && *s <= 'F') d = *s - 'A' + 10;
+        else break;
+        if (d >= base) break;
+        n = n * (unsigned long)base + (unsigned long)d;
+        s++;
+    }
+    (void)start;
+    if (endptr) *endptr = (char *)s;
+    return n;
+}
+
+static inline long strtol(const char *s, char **endptr, int base) {
+    while (*s == ' ' || *s == '\t') s++;
+    int neg = 0;
+    if (*s == '-') { neg = 1; s++; } else if (*s == '+') s++;
+    unsigned long u = strtoul(s, endptr, base);
+    return neg ? -(long)u : (long)u;
+}
+
 static inline int atoi(const char *s) {
     int n = 0, neg = 0;
     while (*s == ' ' || *s == '\t') s++;

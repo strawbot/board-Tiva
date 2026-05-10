@@ -1,0 +1,5 @@
+r
+loadfile /Users/robchapm/TimbreWorks/Projext/ActiveRobot/TIVA/tivaboot.hex
+r
+g
+exit

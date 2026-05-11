@@ -12,7 +12,9 @@
 
 // ── Byte order ────────────────────────────────────────────────────────────────
 // Cortex-M4 is little-endian.
+#ifndef BYTE_ORDER
 #define BYTE_ORDER  LITTLE_ENDIAN
+#endif
 
 // ── Integer types ─────────────────────────────────────────────────────────────
 typedef uint8_t   u8_t;

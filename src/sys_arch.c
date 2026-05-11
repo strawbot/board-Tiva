@@ -1,17 +1,16 @@
 // sys_arch.c — lwIP sys layer for NO_SYS=1 / TimbreOS on TM4C
 //
 // Only sys_now() is needed at runtime with NO_SYS=1.  It must return
-// a monotonically increasing millisecond count; get_ticks() delivers
-// exactly that (Timer0A increments the counter every 1 ms).
+// a monotonically increasing millisecond count.
 
 #include "lwip/sys.h"
-#include "clocks.h"    // get_ticks()
+#include "clocks.h"    // get_ticks(), ONE_SECOND
 
 // Called by lwIP timeouts.c to drive all internal protocol timers.
-// Resolution: 1 ms (ONE_SECOND = 1000 in project_defs.h).
+// get_ticks() is in 10 kHz ticks; ONE_SECOND/1000 = 10 → result in ms.
 uint32_t sys_now(void)
 {
-    return (uint32_t)get_ticks();
+    return (uint32_t)(get_ticks() / (ONE_SECOND / 1000u));
 }
 
 // lwip_assert_handler — called by LWIP_PLATFORM_ASSERT (arch/cc.h).

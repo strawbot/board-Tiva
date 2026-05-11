@@ -50,10 +50,24 @@ void output(void);
 #define N_EVENTS     50
 #define FIRST_EVENT  (const char *)secs(5)
 
-// ONE_SECOND = 1000 → 1 tick = 1 ms.
-// msec(n) = n, secs(n) = n*1000, mins(n) = n*60000.
-// Scheduling horizon: 2^32 ms / 86400000 ≈ 49.7 days.
-#define ONE_SECOND  1000
+// ONE_SECOND = 10 000 → 1 tick = 100 µs (Timer0A @ 80 MHz / 8000).
+// Matches STM boards.  msec(n) = n*10, secs(n) = n*10000.
+// tea.c uses signed 32-bit deltas: INT_MAX/10000 ≈ 59.7 h scheduling horizon.
+// Hardware rollover: 2^32/10000 ≈ 5 days (scheduler re-arms as needed).
+#define ONE_SECOND  10000UL
+
+// ── Clocks hardware wiring (consumed by TimbreOS/clocks.c) ────────────────
+// TIVA uses TivaWare timer APIs — all hardware clock functions live in
+// src/clocks.c.  TimbreOS/clocks.c supplies the board-agnostic utilities
+// (timestamp_to_utc, epoch_to_tm, tm_to_epoch, over_due, micro_sleep,
+// print_build_banner).
+// TIVA has no RTC, so get_utc() is not defined; CLOCK_HAS_SHOW avoids
+// referencing it in the common show_timer().
+#define CLOCK_HAS_BLINK   // src/clocks.c provides blink_leds() via TivaWare GPIO
+#define CLOCK_HAS_INIT    // src/clocks.c provides init_clocks() via TivaWare timer
+#define CLOCK_HAS_TICKS   // src/clocks.c provides get_ticks()
+#define CLOCK_HAS_DELTA   // src/clocks.c provides set_delta_alarm() / delta_alarm()
+#define CLOCK_HAS_SHOW    // src/clocks.c provides show_timer() (uses getUptime, not get_utc)
 
 // ── Atomic sections (ARM Cortex-M4 CPSID / CPSIE) ─────────────────────────
 // tea.h's safe(code) macro expands to:
@@ -88,8 +102,8 @@ static inline int _tiva_in_irq(void) {
 #define US_TO_SYS(n)  ((n) * CLOCK_MHZ)
 
 // ── Tick counter ───────────────────────────────────────────────────────────
-// get_ticks() returns ms uptime. With ONE_SECOND = 1000, one tick = one ms,
-// so get_ticks() == getTime() — no conversion needed.
+// get_ticks() returns 10 kHz ticks (Timer0A @ 80 MHz / 8000, no ISR).
+// getTime() = to_msec(get_ticks()) converts to ms via ONE_SECOND.
 Long get_ticks(void);
 
 // ── Delta alarm ────────────────────────────────────────────────────────────

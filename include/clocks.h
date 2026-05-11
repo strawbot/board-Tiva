@@ -11,9 +11,10 @@
 #include "project_defs.h"
 #include <time.h>
 
-// Convert 10 kHz ticks to real time (ONE_SECOND = 10 000)
-#define TO_US(ticks)  ((Octet)(ticks) * 1000000uLL / ONE_SECOND)
-#define TO_MS(ticks)  ((Octet)(ticks) * 1000uLL    / ONE_SECOND)
+// Tick/real-time conversions: ticks are raw 80 MHz cycles (ONE_SECOND = 80 000 000).
+// Simple integer divides — no multiply needed at this clock rate.
+#define TO_US(ticks)  ((ticks) / 80UL)
+#define TO_MS(ticks)  ((ticks) / 80000UL)
 
 // Libc-free UTC date/time math (provided by TimbreOS/clocks.c)
 Long timestamp_to_utc(const char *ts);

@@ -61,7 +61,7 @@ static void net_poll(void)
 {
     usb_netif_poll(&g_netif);
     sys_check_timeouts();
-    after(10, net_poll);   // re-schedule every 10 ms
+    after(msec(10), net_poll);   // re-schedule every 10 ms
 }
 
 // ── Network init — deferred until after the CLI banner ───────────────────────

@@ -50,11 +50,11 @@ void output(void);
 #define N_EVENTS     50
 #define FIRST_EVENT  (const char *)secs(5)
 
-// ONE_SECOND = 10 000 → 1 tick = 100 µs (Timer0A @ 80 MHz / 8000).
-// Matches STM boards.  msec(n) = n*10, secs(n) = n*10000.
-// tea.c uses signed 32-bit deltas: INT_MAX/10000 ≈ 59.7 h scheduling horizon.
-// Hardware rollover: 2^32/10000 ≈ 5 days (scheduler re-arms as needed).
-#define ONE_SECOND  10000UL
+// ONE_SECOND = 80 000 000 → 1 tick = 1 cycle at 80 MHz (Timer0A, no ISR).
+// msec(n) and secs(n) use 64-bit intermediates in tea.h so large ONE_SECOND is safe.
+// tea.c signed-int delta arithmetic: INT_MAX/80000000 ≈ 26.8 s scheduling horizon;
+// the scheduler re-arms automatically for longer durations.
+#define ONE_SECOND  80000000UL
 
 // ── Clocks hardware wiring (consumed by TimbreOS/clocks.c) ────────────────
 // TIVA uses TivaWare timer APIs — all hardware clock functions live in
@@ -102,8 +102,7 @@ static inline int _tiva_in_irq(void) {
 #define US_TO_SYS(n)  ((n) * CLOCK_MHZ)
 
 // ── Tick counter ───────────────────────────────────────────────────────────
-// get_ticks() returns 10 kHz ticks (Timer0A @ 80 MHz / 8000, no ISR).
-// getTime() = to_msec(get_ticks()) converts to ms via ONE_SECOND.
+// get_ticks() returns raw Timer0A cycles (80 MHz, no ISR, no division).
 Long get_ticks(void);
 
 // ── Delta alarm ────────────────────────────────────────────────────────────

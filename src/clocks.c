@@ -9,14 +9,14 @@
 //
 // Timer0A — 32-bit free-running counter at system clock (80 MHz), no ISR.
 //   Configured as periodic with load=0xFFFFFFFF, counting down.
-//   get_ticks() = (~TAR) / 8000 → 10 kHz ticks (100 µs), ONE_SECOND=10000.
-//   Scaling keeps tea.c's signed-int delta arithmetic valid to ~59.7 hours.
-//   Hardware rollover: 2^32/10000 ≈ 5 days (scheduler re-arms as needed).
+//   get_ticks() = ~TAR — raw 80 MHz cycles, ONE_SECOND=80000000.
+//   tea.c signed-int delta: INT_MAX cycles ≈ 26.8 s scheduling horizon;
+//   the scheduler re-arms automatically for longer durations.
 //
 // Timer1A — 32-bit one-shot at system clock (80 MHz).
-//   set_delta_alarm(t) converts 10 kHz ticks to cycles (×8000) and loads.
+//   set_delta_alarm(t): t is already in 80 MHz cycles; load = t − 1.
 //   ISR calls (*alarmEvent)() to dispatch due time events.
-//   Maximum one-shot: DELTA_MAX_TICKS = 536870 ticks (≈53.7 s). Longer
+//   Maximum one-shot: DELTA_MAX_TICKS = INT32_MAX cycles (≈26.8 s). Longer
 //   alarms are clamped; the scheduler re-arms automatically.
 //
 // DWT CYCCNT — 80 MHz cycle counter.
@@ -44,21 +44,19 @@
 #include "printers.h"
 
 // ── Tick counter — Timer0A free-running ───────────────────────────────────
-// Timer0A counts down from 0xFFFFFFFF at 80 MHz; inverting gives an
-// up-counter.  Dividing by 8000 scales to 10 kHz (100 µs/tick), matching
-// ONE_SECOND=10000.  No ISR; get_ticks() is two instructions.
-// tea.c uses signed 32-bit arithmetic on tick deltas, so ONE_SECOND must
-// stay small enough that INT_MAX/ONE_SECOND >> any real timeout.
+// Timer0A counts down from 0xFFFFFFFF at 80 MHz; inverting gives a raw
+// up-counter in cycles.  No ISR, no division — ONE_SECOND=80000000.
+// Guard against pre-init reads (init_tea calls get_ticks before init_clocks).
 
 static bool timer0_ready = false;
 
 Long get_ticks(void) {
     if (!timer0_ready) return 0;
-    return (Long)(~HWREG(TIMER0_BASE + TIMER_O_TAR)) / 8000UL;
+    return (Long)(~HWREG(TIMER0_BASE + TIMER_O_TAR));
 }
 
-// getUptime(): seconds since boot — declared in tea.h, provided by board.
-uint32_t getUptime(void) { return (uint32_t)(get_ticks() / ONE_SECOND); }
+static Long uptime = 0;
+uint32_t getUptime(void) { return (uint32_t)uptime; }
 
 // ── Heartbeat LED (PC4) ───────────────────────────────────────────────────
 
@@ -77,22 +75,21 @@ static void blink_leds(void) {
     case GAP1:  hb_off(); phase = HB2;  t = msec(197) - msec(3); break;
     case HB2:   hb_on();  phase = GAP2; t = msec(3);             break;
     default:
-    case GAP2:  hb_off(); phase = HB1;  t = msec(797) - msec(3); break;
+    case GAP2:  hb_off(); phase = HB1;  t = msec(797) - msec(3); uptime++; break;
     }
     in(t, blink_leds);
 }
 
 // ── Delta alarm — Timer1A one-shot ────────────────────────────────────────
-// t is in 10 kHz ticks (ONE_SECOND = 10000).  Convert to 80 MHz cycles.
-// Max one-shot: 0xFFFFFFFF / 8000 = 536870 ticks (~53.7 s); longer alarms
-// are clamped — the scheduler re-arms automatically for extended durations.
+// t is in raw 80 MHz cycles (ONE_SECOND = 80000000); load = t − 1.
+// Clamped to INT32_MAX to match tea.c's signed-delta scheduling horizon.
 
-#define DELTA_MAX_TICKS  536870UL
+#define DELTA_MAX_TICKS  2147483647UL
 
 void set_delta_alarm(Long t) {
     if (t > DELTA_MAX_TICKS) t = DELTA_MAX_TICKS;
     if (t < 1)               t = 1;
-    uint32_t load = (uint32_t)(t * 8000UL) - 1UL;
+    uint32_t load = (uint32_t)t - 1UL;
     TimerDisable(TIMER1_BASE, TIMER_A);
     TimerLoadSet(TIMER1_BASE, TIMER_A, load);
     TimerEnable (TIMER1_BASE, TIMER_A);

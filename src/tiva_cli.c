@@ -654,7 +654,7 @@ void usb_reconnect(void)
 {
     USBDevDisconnect(USB0_BASE);
     print("USB: disconnected — reconnecting in 50 ms\r\n");
-    after(50, usb_do_connect);
+    after(msec(50), usb_do_connect);
 }
 
 // ── test_usb_isr ──────────────────────────────────────────────────────────────

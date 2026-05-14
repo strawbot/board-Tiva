@@ -1,5 +1,5 @@
 r
-loadfile /Users/robchapm/TimbreWorks/Projext/ActiveRobot/TIVA/tivaboot.hex
+loadfile /Users/robchapm/TimbreWorks/Projext/ActiveRobot/board-TIVA/tivaboot.hex
 r
 g
 exit

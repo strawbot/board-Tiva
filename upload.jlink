@@ -1,6 +1,6 @@
-r
+connect
 h
-loadfile .pio/build/mini_m4_tiva/firmware.bin
+loadfile .pio/build/mini_m4_tiva/firmware.hex
 r
 g
 exit

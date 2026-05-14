@@ -67,7 +67,7 @@ uint32_t getUptime(void) { return (uint32_t)uptime; }
 static inline void hb_on (void) { GPIOPinWrite(HB_LED_PORT, HB_LED_PIN, HB_LED_PIN); }
 static inline void hb_off(void) { GPIOPinWrite(HB_LED_PORT, HB_LED_PIN, 0); }
 
-static void blink_leds(void) {
+void blink_leds(void) {
     Long t;
     static enum { HB1, GAP1, HB2, GAP2 } phase = GAP2;
     switch (phase) {

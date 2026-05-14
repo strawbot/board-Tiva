@@ -28,5 +28,5 @@ $(HEX): $(OUTPUT)
 clean:
 	rm -f *.o $(OUTPUT) $(BIN) $(HEX)
 
-flash: $(BIN)
-	python3 -m mikroe_uhb write $(BIN)
+flash:
+	openocd -f openocd.cfg -c "program .pio/build/mini_m4_tiva/firmware.elf verify" -c "reset run" -c "sleep 200" -c "shutdown"
